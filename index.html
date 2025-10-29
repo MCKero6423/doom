@@ -18,9 +18,7 @@
         window.onload = function() {
             const canvas = document.getElementById("doom-canvas");
             const wadUrl = "https://js.mckero.com/freedoom1.wad";
-
-            // 这是js-dos官方提供的一个包含FreeDoom引擎(.exe)的基础包
-            // 我们需要它来启动游戏
+            // 这个基础包包含 DOOM 引擎 (doom.exe)
             const doomBundleUrl = "https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos";
 
             async function startDoom() {
@@ -34,17 +32,21 @@
                     const wadData = await response.arrayBuffer();
                     console.log("Your WAD file downloaded successfully.");
 
-                    // --- 关键修正：使用 js-dos v7 的正确 API ---
+                    // --- 最终修正：使用正确的 ci.upload() API ---
 
-                    // 1. 将你的 .wad 文件写入到 js-dos 的虚拟文件系统里
-                    //    我们给它起名为 "my-game.wad"，以免和包里的文件名冲突
-                    console.log("Writing your WAD to virtual file system...");
-                    await ci.fs.writeFile("my-game.wad", new Uint8Array(wadData));
+                    // 1. 将你下载的 WAD 文件打包成一个对象数组
+                    const filesToUpload = [
+                        { name: "freedoom.wad", data: new Uint8Array(wadData) }
+                    ];
 
-                    // 2. 运行基础包，并通过命令行参数 '-iwad' 告诉引擎
-                    //    去加载我们刚刚写入的 "my-game.wad" 文件！
+                    // 2. 使用 ci.upload() 将文件上传到模拟器的虚拟文件系统
+                    console.log("Uploading your WAD to virtual file system...");
+                    await ci.upload(filesToUpload);
+
+                    // 3. 运行基础包，并通过命令行参数 '-iwad' 告诉引擎
+                    //    去加载我们刚刚上传的 "freedoom.wad" 文件！
                     console.log("Starting DOOM engine with your custom WAD...");
-                    await ci.run(doomBundleUrl, ["-iwad", "my-game.wad"]);
+                    await ci.run(doomBundleUrl, ["-iwad", "freedoom.wad"]);
 
                 } catch (error) {
                     console.error("An error occurred during DOOM setup:", error);
