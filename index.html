@@ -12,43 +12,39 @@
 <body>
     <canvas id="doom-canvas"></canvas>
 
-    <!-- 第 1 步：加载 js-dos 库。这个脚本会创建一个全局的 "Dos" 变量 -->
     <script src="https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js"></script>
 
-    <!-- 第 2 步：运行我们自己的代码。注意这里没有 type="module" -->
     <script>
-        // 为了确保页面和上面的脚本都加载完毕，把所有东西放进 window.onload
         window.onload = function() {
             const canvas = document.getElementById("doom-canvas");
             const wadUrl = "https://js.mckero.com/freedoom1.wad";
 
-            // 因为上一个 <script> 标签已经运行，现在可以直接使用全局的 Dos 变量了
-            // 注意 Dos 前面没有 import，直接就能用！
-            if (typeof Dos === "undefined") {
-                console.error("js-dos library failed to load!");
-                document.body.innerHTML = `<div style="color: red; padding: 20px;"><h2>Error: js-dos library did not load.</h2></div>`;
-                return;
-            }
+            // 这是js-dos官方提供的一个包含FreeDoom引擎(.exe)的基础包
+            // 我们需要它来启动游戏
+            const doomBundleUrl = "https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos";
 
             async function startDoom() {
                 try {
-                    console.log("Initializing js-dos (classic method)...");
-                    const ci = await Dos(canvas); // 直接调用全局的 Dos
+                    console.log("Initializing js-dos v7...");
+                    const ci = await Dos(canvas);
 
-                    console.log(`Fetching WAD from: ${wadUrl}`);
+                    console.log(`Fetching your WAD from: ${wadUrl}`);
                     const response = await fetch(wadUrl);
-
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch WAD file. Status: ${response.status}`);
-                    }
-                    
+                    if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
                     const wadData = await response.arrayBuffer();
-                    console.log("WAD file downloaded successfully.");
+                    console.log("Your WAD file downloaded successfully.");
 
-                    const bundle = await ci.dos.bundle.create(new Uint8Array(wadData), false);
+                    // --- 关键修正：使用 js-dos v7 的正确 API ---
 
-                    console.log("Starting DOOM engine...");
-                    await ci.run("doom.exe", ["-iwad", "file.wad"], { bundle });
+                    // 1. 将你的 .wad 文件写入到 js-dos 的虚拟文件系统里
+                    //    我们给它起名为 "my-game.wad"，以免和包里的文件名冲突
+                    console.log("Writing your WAD to virtual file system...");
+                    await ci.fs.writeFile("my-game.wad", new Uint8Array(wadData));
+
+                    // 2. 运行基础包，并通过命令行参数 '-iwad' 告诉引擎
+                    //    去加载我们刚刚写入的 "my-game.wad" 文件！
+                    console.log("Starting DOOM engine with your custom WAD...");
+                    await ci.run(doomBundleUrl, ["-iwad", "my-game.wad"]);
 
                 } catch (error) {
                     console.error("An error occurred during DOOM setup:", error);
