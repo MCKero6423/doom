@@ -12,52 +12,55 @@
 <body>
     <canvas id="doom-canvas"></canvas>
 
-    <script type="module">
-        // --- 关键修正：使用了 jsDelivr 这个稳定可靠的 CDN 链接 ---
-        import { Dos } from "https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js";
+    <!-- 第 1 步：加载 js-dos 库。这个脚本会创建一个全局的 "Dos" 变量 -->
+    <script src="https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js"></script>
 
-        const canvas = document.getElementById("doom-canvas");
+    <!-- 第 2 步：运行我们自己的代码。注意这里没有 type="module" -->
+    <script>
+        // 为了确保页面和上面的脚本都加载完毕，把所有东西放进 window.onload
+        window.onload = function() {
+            const canvas = document.getElementById("doom-canvas");
+            const wadUrl = "https://js.mckero.com/freedoom1.wad";
 
-        // 这个 URL 是你配置好的，是完全正确的！
-        const wadUrl = "https://js.mckero.com/freedoom1.wad";
-
-        async function startDoom() {
-            try {
-                // 1. 加载 js-dos 库 (现在应该成功了)
-                console.log("Initializing js-dos from new URL...");
-                const ci = await Dos(canvas);
-
-                // 2. 获取你的 WAD 文件
-                console.log(`Fetching WAD from: ${wadUrl}`);
-                const response = await fetch(wadUrl);
-
-                if (!response.ok) {
-                    // 如果你的 WAD 文件 URL 出错，会在这里提示
-                    throw new Error(`Failed to fetch WAD file. Status: ${response.status}`);
-                }
-                
-                const wadData = await response.arrayBuffer();
-                console.log("WAD file downloaded successfully.");
-
-                // 3. 创建 jsdos bundle
-                const bundle = await ci.dos.bundle.create(new Uint8Array(wadData), false);
-
-                // 4. 启动 DOOM
-                console.log("Starting DOOM engine...");
-                await ci.run("doom.exe", ["-iwad", "file.wad"], { bundle });
-
-            } catch (error) {
-                // 如果任何步骤出错，都会在这里显示详细信息
-                console.error("An error occurred during DOOM setup:", error);
-                document.body.innerHTML = `<div style="color: red; font-family: monospace; padding: 20px;">
-                    <h2>Error starting DOOM:</h2>
-                    <pre>${error.stack}</pre>
-                </div>`;
+            // 因为上一个 <script> 标签已经运行，现在可以直接使用全局的 Dos 变量了
+            // 注意 Dos 前面没有 import，直接就能用！
+            if (typeof Dos === "undefined") {
+                console.error("js-dos library failed to load!");
+                document.body.innerHTML = `<div style="color: red; padding: 20px;"><h2>Error: js-dos library did not load.</h2></div>`;
+                return;
             }
-        }
 
-        // 启动！
-        startDoom();
+            async function startDoom() {
+                try {
+                    console.log("Initializing js-dos (classic method)...");
+                    const ci = await Dos(canvas); // 直接调用全局的 Dos
+
+                    console.log(`Fetching WAD from: ${wadUrl}`);
+                    const response = await fetch(wadUrl);
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch WAD file. Status: ${response.status}`);
+                    }
+                    
+                    const wadData = await response.arrayBuffer();
+                    console.log("WAD file downloaded successfully.");
+
+                    const bundle = await ci.dos.bundle.create(new Uint8Array(wadData), false);
+
+                    console.log("Starting DOOM engine...");
+                    await ci.run("doom.exe", ["-iwad", "file.wad"], { bundle });
+
+                } catch (error) {
+                    console.error("An error occurred during DOOM setup:", error);
+                    document.body.innerHTML = `<div style="color: red; font-family: monospace; padding: 20px;">
+                        <h2>Error starting DOOM:</h2>
+                        <pre>${error.stack}</pre>
+                    </div>`;
+                }
+            }
+
+            startDoom();
+        };
     </script>
 </body>
 </html>
