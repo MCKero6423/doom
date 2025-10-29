@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOOM in my Browser!</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="doom-canvas"></canvas>
+
+    <script type="module">
+        import { Dos } from "https://js-dos.com/v7/js-dos.js";
+
+        const canvas = document.getElementById("doom-canvas");
+
+        // 初始化 js-dos 并运行 DOOM
+        Dos(canvas, {
+            url: `https://js-dos.com/cdn/doom-1-shareware-bundle.jsdos`,
+        }).then(ci => {
+            // 当游戏启动后，告诉它去加载我们自己的 freedoom1.wad 文件
+            ci.upload("./freedoom1.wad").then(() => {
+                // 上传成功后，启动游戏！
+                ci.run();
+            });
+        });
+    </script>
+</body>
+</html>
