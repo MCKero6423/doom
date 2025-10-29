@@ -1,33 +1,56 @@
-<script type="module">
-    import { Dos } from "https://js-dos.com/v7/js-dos.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOOM on the Web</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background-color: #000; }
+        #doom-canvas { width: 100vw; height: 100vh; display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="doom-canvas"></canvas>
 
-    const canvas = document.getElementById("doom-canvas");
-    
-    // --- 代码修改从这里开始 ---
+    <script type="module">
+        import { Dos } from "https://js-dos.com/v7/js-dos.js";
 
-    // 粘贴你从GitHub Release复制的WAD文件URL
-    const wadUrl = "https://js.mckero.com/freedoom1.wad";
+        const canvas = document.getElementById("doom-canvas");
 
-    async function startDoom() {
-        try {
-            // 1. 初始化 js-dos 并加载 DOOM 引擎
-            const ci = await Dos(canvas, {
-                url: `https://js-dos.com/cdn/doom-1-shareware-bundle.jsdos`,
-            });
+        // --- This is the URL you are working on fixing ---
+        const wadUrl = "https://js.mckero.com/freedoom1.wad";
 
-            // 2. 从网络上获取WAD文件
-            console.log(`Downloading WAD from ${wadUrl}...`);
-            const response = await fetch(wadUrl);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch WAD: ${response.statusText}`);
+        async function startDoom() {
+            try {
+                console.log("Initializing js-dos...");
+                const ci = await Dos(canvas);
+
+                console.log(`Fetching WAD from: ${wadUrl}`);
+                const response = await fetch(wadUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok. Status: ${response.status}`);
+                }
+                
+                const wadData = await response.arrayBuffer();
+                console.log("WAD file downloaded successfully.");
+
+                // Create a bundle from the fetched data
+                const bundle = await ci.dos.bundle.create(new Uint8Array(wadData), false);
+
+                console.log("Starting DOOM engine...");
+                await ci.run("doom.exe", ["-iwad", "file.wad"], { bundle });
+
+            } catch (error) {
+                console.error("An error occurred during DOOM setup:", error);
+                document.body.innerHTML = `<div style="color: red; padding: 20px;">
+                    <h2>Error starting DOOM:</h2>
+                    <pre>${error.stack}</pre>
+                </div>`;
             }
-            const wadData = await response.arrayBuffer();
-            console.log("Download complete!");
+        }
 
-            // 3. 将下载的WAD数据写入到模拟器的文件系统里
-            // 我们给它起名为 "doom.wad"，这样DOOM引擎能找到它
-            await ci.fs.writeFile("doom.wad", new Uint8Array(wadData));
-
-            // 4. 运行DOOM，并用 -iwad 参数明确告诉它使用我们刚写入的文件
-            // 这比之前的 ci.upload() 更强大
-            await ci.run
+        startDoom();
+    </script>
+</body>
+</html>
