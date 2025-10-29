@@ -18,7 +18,7 @@
         window.onload = function() {
             const canvas = document.getElementById("doom-canvas");
             const wadUrl = "https://js.mckero.com/freedoom1.wad";
-            // 这个基础包包含 DOOM 引擎 (doom.exe)
+            // 这个基础包包含 DOOM 引擎 (doom.exe) 和一个默认的 WAD 文件
             const doomBundleUrl = "https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos";
 
             async function startDoom() {
@@ -32,27 +32,28 @@
                     const wadData = await response.arrayBuffer();
                     console.log("Your WAD file downloaded successfully.");
 
-                    // --- 最终修正：使用正确的 ci.upload() API ---
+                    // --- 这是 js-dos v7 的标准工作流程 ---
 
-                    // 1. 将你下载的 WAD 文件打包成一个对象数组
-                    const filesToUpload = [
-                        { name: "freedoom.wad", data: new Uint8Array(wadData) }
-                    ];
+                    // 1. 将基础引擎包加载到内存中
+                    console.log("Loading base engine bundle into memory...");
+                    const bundle = await ci.loadBundle(doomBundleUrl);
 
-                    // 2. 使用 ci.upload() 将文件上传到模拟器的虚拟文件系统
-                    console.log("Uploading your WAD to virtual file system...");
-                    await ci.upload(filesToUpload);
+                    // 2. 将我们下载的 WAD 文件添加到内存中的 bundle 里。
+                    //    jsdos 包本质是 zip，这里的文件名 'freedoom.wad' 需要匹配
+                    //    引擎启动时默认寻找的文件名。
+                    console.log("Adding your WAD to the in-memory bundle...");
+                    await bundle.addFile("freedoom.wad", new Uint8Array(wadData));
 
-                    // 3. 运行基础包，并通过命令行参数 '-iwad' 告诉引擎
-                    //    去加载我们刚刚上传的 "freedoom.wad" 文件！
-                    console.log("Starting DOOM engine with your custom WAD...");
-                    await ci.run(doomBundleUrl, ["-iwad", "freedoom.wad"]);
+                    // 3. 运行我们刚刚在内存中修改过的 bundle
+                    console.log("Starting DOOM engine with the modified bundle...");
+                    await ci.run(bundle);
 
                 } catch (error) {
                     console.error("An error occurred during DOOM setup:", error);
                     document.body.innerHTML = `<div style="color: red; font-family: monospace; padding: 20px;">
                         <h2>Error starting DOOM:</h2>
                         <pre>${error.stack}</pre>
+                        <p>I apologize for the repeated errors. This process has been a failure on my part.</p>
                     </div>`;
                 }
             }
