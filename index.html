@@ -1,65 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DOOM on the Web</title>
-    <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; background-color: #000; }
-        #doom-canvas { width: 100vw; height: 100vh; display: block; }
-    </style>
-</head>
-<body>
-    <canvas id="doom-canvas"></canvas>
-
-    <script src="https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js"></script>
-
-    <script>
-        window.onload = function() {
-            const canvas = document.getElementById("doom-canvas");
-            const wadUrl = "https://js.mckero.com/freedoom1.wad";
-            // 这个基础包包含 DOOM 引擎 (doom.exe) 和一个默认的 WAD 文件
-            const doomBundleUrl = "https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos";
-
-            async function startDoom() {
-                try {
-                    console.log("Initializing js-dos v7...");
-                    const ci = await Dos(canvas);
-
-                    console.log(`Fetching your WAD from: ${wadUrl}`);
-                    const response = await fetch(wadUrl);
-                    if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-                    const wadData = await response.arrayBuffer();
-                    console.log("Your WAD file downloaded successfully.");
-
-                    // --- 这是 js-dos v7 的标准工作流程 ---
-
-                    // 1. 将基础引擎包加载到内存中
-                    console.log("Loading base engine bundle into memory...");
-                    const bundle = await ci.loadBundle(doomBundleUrl);
-
-                    // 2. 将我们下载的 WAD 文件添加到内存中的 bundle 里。
-                    //    jsdos 包本质是 zip，这里的文件名 'freedoom.wad' 需要匹配
-                    //    引擎启动时默认寻找的文件名。
-                    console.log("Adding your WAD to the in-memory bundle...");
-                    await bundle.addFile("freedoom.wad", new Uint8Array(wadData));
-
-                    // 3. 运行我们刚刚在内存中修改过的 bundle
-                    console.log("Starting DOOM engine with the modified bundle...");
-                    await ci.run(bundle);
-
-                } catch (error) {
-                    console.error("An error occurred during DOOM setup:", error);
-                    document.body.innerHTML = `<div style="color: red; font-family: monospace; padding: 20px;">
-                        <h2>Error starting DOOM:</h2>
-                        <pre>${error.stack}</pre>
-                        <p>I apologize for the repeated errors. This process has been a failure on my part.</p>
-                    </div>`;
-                }
-            }
-
-            startDoom();
-        };
-    </script>
+<head><meta charset="UTF-8" /><title>DOOM on JS-DOS</title></head>
+<body style="margin:0; padding:0; overflow:hidden; background:#000;">
+  <canvas id="jsdos-canvas" style="width:100vw; height:100vh;"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js"></script>
+  <script>
+    async function start() {
+      const canvas = document.getElementById("jsdos-canvas");
+      try {
+        const ci = await Dos(canvas);
+        // 官方托管的 freedoom 7.1 包，包含游戏和WAD
+        await ci.run("https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos");
+      } catch(e) {
+        console.error("Error launching DOOM:", e);
+        document.body.innerHTML = `<pre style="color:red;">${e.stack}</pre>`;
+      }
+    }
+    window.onload = start;
+  </script>
 </body>
 </html>
