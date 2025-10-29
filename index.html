@@ -13,43 +13,50 @@
     <canvas id="doom-canvas"></canvas>
 
     <script type="module">
-        import { Dos } from "https://js-dos.com/v7/js-dos.js";
+        // --- 关键修正：使用了 jsDelivr 这个稳定可靠的 CDN 链接 ---
+        import { Dos } from "https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js";
 
         const canvas = document.getElementById("doom-canvas");
 
-        // --- This is the URL you are working on fixing ---
+        // 这个 URL 是你配置好的，是完全正确的！
         const wadUrl = "https://js.mckero.com/freedoom1.wad";
 
         async function startDoom() {
             try {
-                console.log("Initializing js-dos...");
+                // 1. 加载 js-dos 库 (现在应该成功了)
+                console.log("Initializing js-dos from new URL...");
                 const ci = await Dos(canvas);
 
+                // 2. 获取你的 WAD 文件
                 console.log(`Fetching WAD from: ${wadUrl}`);
                 const response = await fetch(wadUrl);
 
                 if (!response.ok) {
-                    throw new Error(`Network response was not ok. Status: ${response.status}`);
+                    // 如果你的 WAD 文件 URL 出错，会在这里提示
+                    throw new Error(`Failed to fetch WAD file. Status: ${response.status}`);
                 }
                 
                 const wadData = await response.arrayBuffer();
                 console.log("WAD file downloaded successfully.");
 
-                // Create a bundle from the fetched data
+                // 3. 创建 jsdos bundle
                 const bundle = await ci.dos.bundle.create(new Uint8Array(wadData), false);
 
+                // 4. 启动 DOOM
                 console.log("Starting DOOM engine...");
                 await ci.run("doom.exe", ["-iwad", "file.wad"], { bundle });
 
             } catch (error) {
+                // 如果任何步骤出错，都会在这里显示详细信息
                 console.error("An error occurred during DOOM setup:", error);
-                document.body.innerHTML = `<div style="color: red; padding: 20px;">
+                document.body.innerHTML = `<div style="color: red; font-family: monospace; padding: 20px;">
                     <h2>Error starting DOOM:</h2>
                     <pre>${error.stack}</pre>
                 </div>`;
             }
         }
 
+        // 启动！
         startDoom();
     </script>
 </body>
