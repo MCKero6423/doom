@@ -1,22 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><title>DOOM on JS-DOS</title></head>
-<body style="margin:0; padding:0; overflow:hidden; background:#000;">
-  <canvas id="jsdos-canvas" style="width:100vw; height:100vh;"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/js-dos@7/dist/js-dos.js"></script>
-  <script>
-    async function start() {
-      const canvas = document.getElementById("jsdos-canvas");
-      try {
-        const ci = await Dos(canvas);
-        // 官方托管的 freedoom 7.1 包，包含游戏和WAD
-        await ci.run("https://cdn.dos.zone/original/2X/2/223a233c7cb1370a5a6764f891e4a83877c44919.jsdos");
-      } catch(e) {
-        console.error("Error launching DOOM:", e);
-        document.body.innerHTML = `<pre style="color:red;">${e.stack}</pre>`;
-      }
-    }
-    window.onload = start;
-  </script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOOM in Browser</title>
+    <link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        #dosbox {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div id="dosbox"></div>
+    
+    <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+    <script>
+        Dos(document.getElementById("dosbox"), {
+            url: "https://js.mckero.com/doom2.jsdos",
+        }).then((ci) => {
+            console.log("DOOM loaded successfully!");
+        }).catch((error) => {
+            console.error("Failed to load DOOM:", error);
+        });
+    </script>
 </body>
 </html>
